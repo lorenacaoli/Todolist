@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>To Do List</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Permanent+Marker">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins">
+    <style>
+    body{
+        font-family: 'Poppins', serif;
+    }
+
+    .titulo{
+        font-family: 'Permanent Marker', serif;
+        font-size:40px
+    }
+    .titulo-status, .botao{
+        font-family: 'Permanent Marker', serif;
+    }
+
+    .botao{
+        background-color: #e697d2;
+        padding: 20px 30px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+        font-size: 15px;
+        border: none;
+        color: #fff;
+    }
+
+    .botao:hover{
+        background-color: #fae3f6;
+        cursor: pointer;
+        color: #e697d2;
+    }
+
+    .content{
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        justify-content: center;
+    }
+    .card {
+        justify-content: center;
+        display: flex;
+        background-color: #fae3f6;
+        flex-direction: column;
+        padding: 5px;
+        border-radius: 20px;
+        width: 100%;
+        margin: 5px 0;
+    }
+    .coluna {
+        display: flex;
+        margin: 0 25px 0 0;
+        padding:10px;
+        flex: 1;
+        align-items: center;
+        background-color: #e697d2;
+        border-radius: 30px;
+        flex-direction: column;
+    }
+
+    .titulo-card{
+        text-align: center;
+    }
+
+    .categoria-data{
+        display:flex;
+        justify-content:space-between;
+        border-top: 1px solid #e697d2;
+        padding-top: 2px;
+    }
+
+    .topo{
+        display:flex;
+        justify-content:space-between;
+    }
+
+    .texto{
+        text-align:center
+    }
+    .link{
+        margin: 5px;
+    }
+
+    .link:hover{
+        margin: 5px;
+        cursor:pointer;
+        color: #b35d9d;
+    }
+    .campo{
+        display: flex;
+        margin: 0 20px;
+    }
+    .input{
+        padding: 5px;
+        margin: 5px;
+        border-radius: 5px;
+        border: 1px solid #e697d2;
+        flex: 5
+    }
+    .flex-1{
+        flex: 1
+    }
+
+    .cadastro {
+        margin: 15px 0;
+        width: 100%;
+    }
+
+    .esconder {
+        display:none
+    }
+
+    </style>
+</head>
+<body>
+    <div style="display:flex; justify-content:center;flex-direction: column;align-items: center;">
+        <div style="flex:1">
+            <h1 class="titulo">Lista de Tarefas</h1>
+        </div>
+        <div>
+            <button id="botao-cadastro" class="botao" onclick="displayCadastro()">Inserir Tarefa</button>
+        </div>
+        <div class="cadastro esconder">
+            <div class="campo">
+                <label class="flex-1">Nome</label>
+                <input class="input" required id="nome">
+            </div>
+            <div class="campo">
+                <label class="flex-1">Descrição</label>
+                <input class="input" required id="descricao">
+            </div>
+            <div class="campo">
+                <label class="flex-1">Prioridade</label>
+                <input class="input" required type="number" max="5" min="1" id="prioridade">
+            </div>
+            <div class="campo">
+                <label class="flex-1">Data</label>
+                <input class="input" required id="data">
+            </div>
+            <div class="campo">
+                <label class="flex-1">Status</label>
+                <input class="input" required id="status">
+            </div>
+            <div class="campo">
+                <label class="flex-1">Categoria</label>
+                <input class="input" required id="categoria">
+            </div>
+            <div class="esconder">
+                <label class="flex-1">Id</label>
+                <input class="input" required id="id" value="0">
+            </div>
+            <div class="campo" style="justify-content: center;margin-top: 20px;">
+                <button style="padding: 20px 60px;" class="botao" onclick="salvar()">Salvar</button>
+            </div>
+        </div>
+        <div class="content">
+            <div class="coluna" id="todo">
+                <div>
+                    <h3 class="titulo-status">TO DO</h3>
+                </div>
+            </div>
+            <div class="coluna" id="doing">
+                <div>
+                    <h3 class="titulo-status">DOING</h3>
+                </div>
+            </div>
+            <div class="coluna" id="done">
+                <div>
+                    <h3 class="titulo-status">DONE</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+    let tarefas = []
+
+    document.addEventListener("DOMContentLoaded", function() {
+        document.getElementById('id').value = 0
+        var close = document.getElementsByClassName("excluir")
+
+        for (let i = 0; i < close.length; i++) {
+            close[i].onclick = function() {
+            var div = this.parentElement;
+            div.style.display = "none";
+            }
+        }
+
+        carregarTarefas();
+    });
+
+    function carregarTarefas() {
+        tarefas = tarefas.filter(onlyUnique)
+
+        const todo = tarefas.filter(x => x.status.toUpperCase().trim() === 'TO DO')
+        const doing = tarefas.filter(x => x.status.toUpperCase().trim() === 'DOING')
+        const done = tarefas.filter(x => x.status.toUpperCase().trim() === 'DONE')
+
+        const listTodo = document.getElementById('todo')
+        const listaDoing = document.getElementById('doing')
+        const listaDone = document.getElementById('done')
+
+        let elementosTodo = listTodo.getElementsByClassName('card')
+
+        for(let i = 0; i< elementosTodo.length; i++)
+            elementosTodo[i].parentNode.removeChild(elementosTodo[i]);
+
+         todo.map(x => {
+            const divCard = document.createElement('div');
+            const titulo = document.createElement('h4');
+            const divTexto = document.createElement('div');
+            const descricao = document.createElement('p');
+            const divCategoria = document.createElement('div');
+            const categoria = document.createElement('span');
+            const prioridade = document.createElement('span');
+            const data = document.createElement('span');
+            const acoes = document.createElement('div')
+            const excluir = document.createElement('span')
+            const alterar = document.createElement('span')
+
+            prioridade.innerText = 'Prioridade ' + x.prioridade
+            categoria.innerText = x.categoria
+            data.innerText = x.data
+            divCategoria.appendChild(categoria)
+            divCategoria.appendChild(prioridade)
+            divCategoria.appendChild(data)
+
+            titulo.innerText = x.nome
+            descricao.innerText = x.descricao
+            excluir.innerText = 'Excluir'
+            alterar.innerText = 'Alterar'
+            excluir.classList.add('link')
+            excluir.classList.add('excluir')
+            alterar.classList.add('link')
+
+            excluir.onclick = function() {
+                var div = this.parentElement.parentElement;
+                div.style.display = "none";
+            }
+
+            alterar.onclick = function () {
+                var cadastro = document.getElementsByClassName('cadastro')
+                var botao = document.getElementById('botao-cadastro')
+
+                document.getElementById('nome').value = x.nome
+                document.getElementById('descricao').value = x.descricao
+                document.getElementById('prioridade').value = x.prioridade
+                document.getElementById('data').value = x.data
+                document.getElementById('status').value = x.status
+                document.getElementById('categoria').value = x.categoria
+                document.getElementById('id').value = x.id
+
+                cadastro[0].classList.remove("esconder");
+                botao.classList.add('esconder')
+            }
+
+            acoes.classList.add('topo')
+            acoes.appendChild(excluir)
+            acoes.appendChild(titulo)
+            acoes.appendChild(alterar)
+
+            divCard.classList.add('card')
+            titulo.classList.add('titulo-card')
+            divTexto.classList.add('texto')
+            divCategoria.classList.add('categoria-data')
+
+            divTexto.appendChild(descricao)
+
+            divCard.appendChild(acoes)
+            divCard.appendChild(divTexto)
+            divCard.appendChild(divCategoria)
+
+            listTodo.appendChild(divCard)
+         })
+
+        let elementosDoing = listaDoing.getElementsByClassName('card')
+
+        for(let i = 0; i< elementosDoing.length; i++)
+            elementosDoing[i].parentNode.removeChild(elementosDoing[i]);
+
+         doing.map(x => {
+            const divCard = document.createElement('div');
+            const titulo = document.createElement('h4');
+            const divTexto = document.createElement('div');
+            const descricao = document.createElement('p');
+            const divCategoria = document.createElement('div');
+            const categoria = document.createElement('span');
+            const prioridade = document.createElement('span');
+            const data = document.createElement('span');
+            const acoes = document.createElement('div')
+            const excluir = document.createElement('span')
+            const alterar = document.createElement('span')
+
+            prioridade.innerText = 'Prioridade ' + x.prioridade
+            categoria.innerText = x.categoria
+            data.innerText = x.data
+            divCategoria.appendChild(categoria)
+            divCategoria.appendChild(prioridade)
+            divCategoria.appendChild(data)
+
+            titulo.innerText = x.nome
+            descricao.innerText = x.descricao
+            excluir.innerText = 'Excluir'
+            alterar.innerText = 'Alterar'
+            excluir.classList.add('link')
+            excluir.classList.add('excluir')
+            alterar.classList.add('link')
+
+            excluir.onclick = function() {
+                var div = this.parentElement.parentElement;
+                div.style.display = "none";
+            }
+
+            alterar.onclick = function () {
+                var cadastro = document.getElementsByClassName('cadastro')
+                var botao = document.getElementById('botao-cadastro')
+
+                document.getElementById('nome').value = x.nome
+                document.getElementById('descricao').value = x.descricao
+                document.getElementById('prioridade').value = x.prioridade
+                document.getElementById('data').value = x.data
+                document.getElementById('status').value = x.status
+                document.getElementById('categoria').value = x.categoria
+                document.getElementById('id').value = x.id
+
+                cadastro[0].classList.remove("esconder");
+                botao.classList.add('esconder')
+            }
+
+            acoes.classList.add('topo')
+            acoes.appendChild(excluir)
+            acoes.appendChild(titulo)
+            acoes.appendChild(alterar)
+
+            divCard.classList.add('card')
+            titulo.classList.add('titulo-card')
+            divTexto.classList.add('texto')
+            divCategoria.classList.add('categoria-data')
+
+            divTexto.appendChild(descricao)
+
+            divCard.appendChild(acoes)
+            divCard.appendChild(divTexto)
+            divCard.appendChild(divCategoria)
+
+            listaDoing.appendChild(divCard)
+         })
+
+        let elementosDone = listaDone.getElementsByClassName('card')
+
+        for(let i = 0; i< elementosDone.length; i++)
+            elementosDone[i].parentNode.removeChild(elementosDone[i]);
+
+        done.map(x => {
+            const divCard = document.createElement('div');
+            const titulo = document.createElement('h4');
+            const divTexto = document.createElement('div');
+            const descricao = document.createElement('p');
+            const divCategoria = document.createElement('div');
+            const categoria = document.createElement('span');
+            const prioridade = document.createElement('span');
+            const data = document.createElement('span');
+            const acoes = document.createElement('div')
+            const excluir = document.createElement('span')
+            const alterar = document.createElement('span')
+
+            prioridade.innerText = 'Prioridade ' + x.prioridade
+            categoria.innerText = x.categoria
+            data.innerText = x.data
+            divCategoria.appendChild(categoria)
+            divCategoria.appendChild(prioridade)
+            divCategoria.appendChild(data)
+
+            titulo.innerText = x.nome
+            descricao.innerText = x.descricao
+            excluir.innerText = 'Excluir'
+            alterar.innerText = 'Alterar'
+            excluir.classList.add('link')
+            excluir.classList.add('excluir')
+            alterar.classList.add('link')
+
+            excluir.onclick = function() {
+                var div = this.parentElement.parentElement;
+                div.style.display = "none";
+            }
+
+            alterar.onclick = function () {
+                var cadastro = document.getElementsByClassName('cadastro')
+                var botao = document.getElementById('botao-cadastro')
+
+                document.getElementById('nome').value = x.nome
+                document.getElementById('descricao').value = x.descricao
+                document.getElementById('prioridade').value = x.prioridade
+                document.getElementById('data').value = x.data
+                document.getElementById('status').value = x.status
+                document.getElementById('categoria').value = x.categoria
+                document.getElementById('id').value = x.id
+
+                cadastro[0].classList.remove("esconder");
+                botao.classList.add('esconder')
+            }
+
+            acoes.classList.add('topo')
+            acoes.appendChild(excluir)
+            acoes.appendChild(titulo)
+            acoes.appendChild(alterar)
+
+            divCard.classList.add('card')
+            titulo.classList.add('titulo-card')
+            divTexto.classList.add('texto')
+            divCategoria.classList.add('categoria-data')
+
+            divTexto.appendChild(descricao)
+
+            divCard.appendChild(acoes)
+            divCard.appendChild(divTexto)
+            divCard.appendChild(divCategoria)
+
+            listaDone.appendChild(divCard)
+         })
+    }
+
+    function displayCadastro() {
+        var cadastro = document.getElementsByClassName('cadastro')
+        var botao = document.getElementById('botao-cadastro')
+        cadastro[0].classList.remove("esconder");
+        botao.classList.add('esconder')
+    }
+
+    function salvar(){
+        var nome = document.getElementById('nome')
+        var descricao = document.getElementById('descricao')
+        var prioridade = document.getElementById('prioridade')
+        var data = document.getElementById('data')
+        var status = document.getElementById('status')
+        var categoria = document.getElementById('categoria')
+        var id = document.getElementById('id').value
+
+        if(id > 0){
+            const tarefa = {id: id, nome: nome.value, descricao: descricao.value, prioridade: prioridade.value, data: data.value, status:status.value, categoria: categoria.value}
+            const index = tarefas.findIndex(x => x.id == tarefa.id)
+            console.log(index)
+            console.log(tarefa.id)
+            console.log(tarefas)
+            tarefas[index] = tarefa
+        }
+        else{
+            const tarefa = {id: Math.random() * 100, nome: nome.value, descricao: descricao.value, prioridade: prioridade.value, data: data.value, status:status.value, categoria: categoria.value}
+            tarefas.push(tarefa)
+        }
+
+        carregarTarefas()
+
+        var cadastro = document.getElementsByClassName('cadastro')
+        var botao = document.getElementById('botao-cadastro')
+
+        cadastro[0].classList.add("esconder");
+        botao.classList.remove('esconder')
+
+        nome.value = ''
+        descricao.value = ''
+        prioridade.value = ''
+        data.value = ''
+        status.value = ''
+        categoria.value = ''
+    }
+
+    function onlyUnique(value, index, self) {
+        return self.indexOf(value) === index;
+    }
+</script>
+</body>
+</html>
